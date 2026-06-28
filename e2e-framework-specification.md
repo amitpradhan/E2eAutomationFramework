@@ -45,7 +45,7 @@ E2eAutomationFramework/
 │           │   └── BaseTest.java
 │           │
 │           └── tests/             # Modular End-to-End Test Verification Scripts
-│               └── E2eWorkflowTest.java
+│               └── com.automation.e2e.tests.E2eWorkflowTest.java
 │
 ├── src/test/resources/
 │   ├── testdata/                  # Dynamic External Data Sheets
