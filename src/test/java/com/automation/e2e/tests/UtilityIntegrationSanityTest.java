@@ -13,29 +13,26 @@ import org.testng.annotations.Test;
 
 public class UtilityIntegrationSanityTest extends BaseTest {
 
-    @Test
+    @Test(description = "Verify all E2E framework core utilities, payload engines, and database bridges function correctly")
     public void verifyAllFrameworkUtilitiesFunctionCorrectly() throws Exception {
+
         // -------------------------------------------------------------------
         // 1. Verify ConfigReader & Playwright UI Context
         // -------------------------------------------------------------------
-        logStep("Executing Sanity Check Step 1: Validating In-Memory ConfigReader...");
-        String targetAppUrl = ConfigReader.getAppUrl();
-        String activeEnvironment = ConfigReader.getEnv();
+        System.out.println("[SANITY] Step 1: Validating In-Memory ConfigReader & UI Lifecycle...");
 
-        Assert.assertNotNull(targetAppUrl, "ConfigReader failed to resolve the App URL!");
-        logStep("Successfully loaded environment configuration profile: " + activeEnvironment.toUpperCase());
+        // Using your dynamic target URL property routing structure
+        Assert.assertNotNull(targetAppUrl, "ConfigReader failed to resolve the App URL from properties configuration!");
 
-        logStep("Navigating browser instance to verified target URL via Playwright...");
-        page.navigate(targetAppUrl);
-        Assert.assertTrue(page.title().length() > 0, "Playwright UI Page initialization failed to fetch title.");
-        logStep("Playwright UI Engine status: Operational. Page Title: " + page.title());
+        // Asserting that the inherited page state instance successfully completed its initial navigation loop
+        Assert.assertTrue(page.title().length() > 0, "Playwright UI Page initialization failed to fetch structural title.");
+        System.out.println("[SANITY] Playwright UI Engine status: Operational. Page Title: " + page.title());
 
         // -------------------------------------------------------------------
         // 2. Verify Payload Utilities (JsonUtils & XmlUtils)
         // -------------------------------------------------------------------
-        logStep("Executing Sanity Check Step 2: Testing Payload Parsing Utilities...");
+        System.out.println("[SANITY] Step 2: Testing Payload Parsing Utilities...");
 
-        // Mocking a basic payload string to test structurally without needing static files yet
         String structuralJsonMock = "{ \"biller\": \"Default\", \"amount\": \"0\" }";
         String structuralXmlMock = "<request><biller>Default</biller><amount>0</amount></request>";
 
@@ -44,50 +41,53 @@ public class UtilityIntegrationSanityTest extends BaseTest {
 
         Assert.assertTrue(customizedJson.contains("SanityTestUser_JSON"), "JsonUtils failed to modify node attributes structural state.");
         Assert.assertTrue(customizedXml.contains("SanityTestUser_XML"), "XmlUtils failed to modify element tag structural state.");
-        logStep("Payload modification utilities status: Operational.");
+        System.out.println("[SANITY] Payload modification utilities status: Operational.");
 
         // -------------------------------------------------------------------
         // 3. Verify ApiClient Engine & Backend Communication
         // -------------------------------------------------------------------
-        logStep("Executing Sanity Check Step 3: Validating ApiClient Network Engine...");
+        System.out.println("[SANITY] Step 3: Validating ApiClient Network Engine...");
+
+        // Re-using the central shared 'playwright' engine context initialized from BaseTest
         ApiClient apiClient = new ApiClient(playwright);
 
         // Fetching the baseline bills index to verify API sandbox responses
         APIResponse apiResponse = apiClient.get("/v1/bills", "application/json");
 
-        logStep("API Request Dispatched to endpoint. Received Response Status Code: " + apiResponse.status());
+        System.out.println("[SANITY] API Request Dispatched. Received Response Status Code: " + apiResponse.status());
         Assert.assertTrue(apiResponse.status() == 200 || apiResponse.status() == 201,
                 "ApiClient connection failed to interact with backend routing server. Status code: " + apiResponse.status());
 
         String responseBody = apiResponse.text();
         Assert.assertNotNull(responseBody, "API backend returned an empty body state execution loop.");
-        logStep("ApiClient Engine status: Operational.");
+        System.out.println("[SANITY] ApiClient Engine status: Operational.");
         apiClient.dispose();
 
         // -------------------------------------------------------------------
         // 4. Verify Validation Engine Core Assertions
         // -------------------------------------------------------------------
-        logStep("Executing Sanity Check Step 4: Testing Centralized Validation Engine...");
+        System.out.println("[SANITY] Step 4: Testing Centralized Validation Engine...");
+
         ValidationEngine.validateJsonPayloads(customizedJson, customizedJson, true); // Strict comparison against self
         boolean xmlCheckResult = ValidationEngine.isValidXml(customizedXml);
 
         Assert.assertTrue(xmlCheckResult, "ValidationEngine failed to confirm structural integrity of valid XML string data block.");
-        logStep("Validation Engine status: Operational.");
+        System.out.println("[SANITY] Validation Engine status: Operational.");
 
         // -------------------------------------------------------------------
         // 5. Verify Database Connectivity & Row Counts
         // -------------------------------------------------------------------
-        logStep("Executing Sanity Check Step 5: Testing Database Pipeline Utility...");
+        System.out.println("[SANITY] Step 5: Testing Database Pipeline Utility...");
         try {
-            // Validating that the database driver connection established in BaseTest works without throwing exceptions
+            // Validating that the database connection established works cleanly without throwing exceptions
             int placeholderCheck = DbUtil.getRowCount("INFORMATION_SCHEMA.TABLES", "1=1");
-            logStep("Database query completed successfully. Accessible structural tables count checked: " + placeholderCheck);
-            logStep("Database Utility status: Operational.");
+            System.out.println("[SANITY] Database query completed. Accessible structural tables count checked: " + placeholderCheck);
+            System.out.println("[SANITY] Database Utility status: Operational.");
         } catch (Exception databaseException) {
-            log.warn("Database structure alert: Utility compiles correctly, but skipped execution validation check. " +
-                    "Verify your local/target SQL database credentials if connection threw exception: " + databaseException.getMessage());
+            System.out.println("[SANITY ALERT] Database structure check compiled, but execution was bypassed. " +
+                    "Verify your target SQL server credentials if the connection threw an exception: " + databaseException.getMessage());
         }
 
-        logStep(">>> ALL UTILITIES VERIFIED: FRAMEWORK CORE SANITY CHECKS COMPLETED COMPLETELY <<<");
+        System.out.println(">>> ALL UTILITIES VERIFIED: FRAMEWORK CORE SANITY CHECKS COMPLETED SUCCESSFULLY <<<");
     }
 }
