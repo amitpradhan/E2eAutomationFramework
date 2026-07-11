@@ -1,8 +1,8 @@
 package com.automation.e2e.tests;
 
 import com.automation.e2e.base.BaseTest;
-import com.automation.e2e.ui.DashboardPage;
-import com.automation.e2e.ui.ScenariosFormPage;
+import com.automation.e2e.ui.gk.DashboardPage;
+import com.automation.e2e.ui.gk.ScenariosFormPage;
 import com.automation.e2e.utils.ExcelUtil;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
