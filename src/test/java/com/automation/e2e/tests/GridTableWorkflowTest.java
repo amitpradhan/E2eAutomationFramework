@@ -3,6 +3,8 @@ package com.automation.e2e.tests;
 import com.automation.e2e.base.BaseTest;
 import com.automation.e2e.ui.BusinessWorkflowPage;
 import com.automation.e2e.ui.DashboardPage;
+import com.automation.e2e.utils.JsonUtils;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.testng.annotations.Test;
 
 public class GridTableWorkflowTest extends BaseTest {
@@ -10,28 +12,27 @@ public class GridTableWorkflowTest extends BaseTest {
     private DashboardPage dashboardPage;
     private BusinessWorkflowPage workflowPage;
 
-    @Test(priority = 1, description = "Verify data tables load and respond to complex row element tracking loops")
+    @Test(priority = 1, description = "Verify data tables search workflows filter correctly using parameters loaded from JSON configuration profiles")
     public void testGridTableOperationsAndRowVerification() {
-        dashboardPage = new DashboardPage(page);
-        dashboardPage.waitForNetworkSettle();
+        // 1. Parse data file dynamically using the framework's JsonUtils extension method
+        JsonNode dataProfile = JsonUtils.readJsonFileAsNode("src/test/resources/testdata/GridTestData.json");
+        String targetedUserQuery = dataProfile.get("searchUserToken").asText();
 
-        // Select the complex business workflow section card
+        // 2. Initialize Page Object models (BaseTest handles navigation & network settle)
+        dashboardPage = new DashboardPage(page);
+
+        // 3. Navigate into the Business Flows track via encapsulated card clicks
         workflowPage = dashboardPage.clickBusinessFlowsScenario();
 
-        // Dynamic context token search execution
-        String targetUserMarker = "apiclient_";
-        workflowPage.executeGridSearch(targetUserMarker);
+        // 4. Run the data-driven target grid search logic using parameters from the JSON file
+        workflowPage.executeGridSearch(targetedUserQuery);
 
-        // Conditional operational validation loop inside live DOM table tree nodes
-        if (workflowPage.isUserRecordVisibleInGrid(targetUserMarker)) {
-            System.out.println("[INFO] Row element discovered in active grid viewport. Issuing sub-tree mutations...");
-
-            // Execute deep target actions scoped directly to the matched table row context
-            workflowPage.clickVerifyKycForUser(targetUserMarker);
-
-            System.out.println("[SUCCESS] Action step sequence completed cleanly against targeted table row.");
+        // 5. Query the grid layout row array elements conditionally
+        if (workflowPage.isUserRecordVisibleInGrid(targetedUserQuery)) {
+            System.out.println("[JSON-DRIVEN] Match found inside current viewport grid for user: " + targetedUserQuery);
+            workflowPage.clickVerifyKycForUser(targetedUserQuery);
         } else {
-            System.out.println("[WARN] Target row indicator state was not visible inside the early table pagination page.");
+            System.out.println("[WARN] Target row item matching token '" + targetedUserQuery + "' was not found inside the active grid rows.");
         }
     }
 }

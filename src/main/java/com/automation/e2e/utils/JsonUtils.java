@@ -3,6 +3,7 @@ package com.automation.e2e.utils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -44,6 +45,17 @@ public class JsonUtils {
             return objectMapper.writeValueAsString(object);
         } catch (IOException e) {
             throw new RuntimeException("Failed to serialize Object to JSON payload", e);
+        }
+    }
+
+    /**
+     * Extension method: Parses a local JSON data source path straight into a traversable node tree.
+     */
+    public static JsonNode readJsonFileAsNode(String filePath) {
+        try {
+            return objectMapper.readTree(new File(filePath));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed parsing target JSON file stream to object graph at: " + filePath, e);
         }
     }
 }
