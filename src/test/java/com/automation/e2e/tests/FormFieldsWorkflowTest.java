@@ -1,6 +1,6 @@
 package com.automation.e2e.tests;
 
-import com.automation.e2e.base.BaseTest;
+import com.automation.e2e.base.Base;
 import com.automation.e2e.ui.gk.DashboardPage;
 import com.automation.e2e.ui.gk.ScenariosFormPage;
 import com.automation.e2e.utils.ExcelUtil;
@@ -10,15 +10,16 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Map;
 
-public class FormFieldsWorkflowTest extends BaseTest {
+public class FormFieldsWorkflowTest extends Base {
 
     private DashboardPage dashboardPage;
     private ScenariosFormPage formPage;
 
     @DataProvider(name = "excelFrameworkDataProvider")
     public Object[][] getExcelTestDataEntries() {
-        String excelFilePath = "src/test/resources/testdata/FormTestData.xlsx";
-        // Using our new map-based extension method for cleaner, breakdown-proof test injections
+        // Dynamically path to src/test/resources/testdata/{activeEnvironment}/FormTestData.xlsx
+        String excelFilePath = "src/test/resources/testdata/" + activeEnvironment + "/FormTestData.xlsx";
+
         List<Map<String, String>> dataRows = ExcelUtil.getTestDataAsMap(excelFilePath, "UserData");
 
         Object[][] testDataMatrix = new Object[dataRows.size()][1];
@@ -30,6 +31,9 @@ public class FormFieldsWorkflowTest extends BaseTest {
 
     @Test(priority = 1, description = "Verify application landing page details map correctly to config properties URL")
     public void testDashboardLandingMetrics() {
+        // Navigates dynamically based on active environment (e.g., local.gk.targetAppUrl, dev.gk.targetAppUrl)
+        navigateToApp("gk");
+
         dashboardPage = new DashboardPage(page);
         dashboardPage.waitForNetworkSettle();
         Assert.assertTrue(page.title().length() > 0, "Failed to capture active landing page title!");
@@ -39,8 +43,8 @@ public class FormFieldsWorkflowTest extends BaseTest {
             dataProvider = "excelFrameworkDataProvider",
             description = "Validate form interaction steps with values dynamically pulled from spreadsheet cells")
     public void testFormFieldsInteractionWorkflow(Map<String, String> excelRowData) {
-        page.navigate(targetAppUrl);
-        page.waitForLoadState(com.microsoft.playwright.options.LoadState.NETWORKIDLE);
+        // Dynamic navigation keeps environment context synced across multi-run setups
+        navigateToApp("gk");
 
         dashboardPage = new DashboardPage(page);
         formPage = dashboardPage.clickBasicElementsScenario();

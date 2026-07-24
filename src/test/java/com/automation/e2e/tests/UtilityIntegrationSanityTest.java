@@ -1,9 +1,8 @@
 package com.automation.e2e.tests;
 
-import com.automation.e2e.base.BaseTest;
+import com.automation.e2e.base.Base;
 import com.automation.e2e.api.ApiClient;
 import com.automation.e2e.db.DbUtil;
-import com.automation.e2e.utils.ConfigReader;
 import com.automation.e2e.utils.JsonUtils;
 import com.automation.e2e.utils.XmlUtils;
 import com.automation.e2e.validators.ValidationEngine;
@@ -11,7 +10,7 @@ import com.microsoft.playwright.APIResponse;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class UtilityIntegrationSanityTest extends BaseTest {
+public class UtilityIntegrationSanityTest extends Base {
 
     @Test(description = "Verify all E2E framework core utilities, payload engines, and database bridges function correctly")
     public void verifyAllFrameworkUtilitiesFunctionCorrectly() throws Exception {
@@ -22,7 +21,7 @@ public class UtilityIntegrationSanityTest extends BaseTest {
         System.out.println("[SANITY] Step 1: Validating In-Memory ConfigReader & UI Lifecycle...");
 
         // Using your dynamic target URL property routing structure
-        Assert.assertNotNull(targetAppUrl, "ConfigReader failed to resolve the App URL from properties configuration!");
+        Assert.assertNotNull(page, "ConfigReader failed to resolve the App URL from properties configuration!");
 
         // Asserting that the inherited page state instance successfully completed its initial navigation loop
         Assert.assertTrue(page.title().length() > 0, "Playwright UI Page initialization failed to fetch structural title.");

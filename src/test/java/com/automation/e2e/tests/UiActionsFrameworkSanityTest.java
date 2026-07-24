@@ -1,8 +1,7 @@
 package com.automation.e2e.tests;
 
-import com.automation.e2e.base.BaseTest;
+import com.automation.e2e.base.Base;
 import com.automation.e2e.utils.UiActionsUtil;
-import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
@@ -12,7 +11,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class UiActionsFrameworkSanityTest extends BaseTest {
+public class UiActionsFrameworkSanityTest extends Base {
 
     private String mockSandboxHtmlPath;
 
