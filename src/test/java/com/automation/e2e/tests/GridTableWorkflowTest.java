@@ -1,13 +1,13 @@
 package com.automation.e2e.tests;
 
-import com.automation.e2e.base.BaseTest;
+import com.automation.e2e.base.Base;
 import com.automation.e2e.ui.gk.BusinessWorkflowPage;
 import com.automation.e2e.ui.gk.DashboardPage;
 import com.automation.e2e.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.testng.annotations.Test;
 
-public class GridTableWorkflowTest extends BaseTest {
+public class GridTableWorkflowTest extends Base {
 
     private DashboardPage dashboardPage;
     private BusinessWorkflowPage workflowPage;

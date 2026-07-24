@@ -9,40 +9,55 @@ import com.microsoft.playwright.options.LoadState;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-public class BaseTest {
+public class Base {
     protected Playwright playwright;
     protected Browser browser;
     protected Page page;
-    protected String targetAppUrl;
+    protected String activeEnvironment;
 
     @BeforeClass
     public void setupTestInfrastructure() {
-        // 1. Resolve configuration values from your properties file
-        targetAppUrl = ConfigReader.getTargetAppUrl();
+        // Resolve target execution environment from System properties (-Denv=sit) or fallback to config default
+        String systemEnv = System.getProperty("env");
+        activeEnvironment = (systemEnv != null && !systemEnv.trim().isEmpty())
+                ? systemEnv.toLowerCase().trim()
+                : ConfigReader.getProperty("default.environment").toLowerCase().trim();
+
         boolean isHeadless = Boolean.parseBoolean(ConfigReader.getProperty("browser.headless"));
         String browserChannel = ConfigReader.getProperty("browser.channel");
         double pageLoadTimeout = Double.parseDouble(ConfigReader.getProperty("timeout.page.load"));
 
-        // 2. Initialize Playwright Context Engine
         playwright = Playwright.create();
 
-        // 3. Configure Browser launch parameters using your custom config values
         BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
                 .setHeadless(isHeadless)
                 .setChannel(browserChannel);
 
         browser = playwright.chromium().launch(launchOptions);
         page = browser.newPage();
-
-        // 4. Apply your global page load timeout parameters safely
         page.setDefaultNavigationTimeout(pageLoadTimeout);
+    }
 
-        // 5. Navigate to the base environment URL instantly and wait for network stability
-        page.navigate(targetAppUrl);
+    /**
+     * Resolves the target app URL dynamically based on app prefix and active environment.
+     * Example: navigateToApp("saucedemo") -> fetches "sit.saucedemo.targetAppUrl" if -Denv=sit
+     */
+    protected void navigateToApp(String appName) {
+        String configKey = activeEnvironment + "." + appName + ".targetAppUrl";
+        String targetUrl = ConfigReader.getProperty(configKey);
 
-        // FIX: Added explicit network idle wait state to ensure client-side rendering
-        // settles completely before any test methods execute.
+        if (targetUrl == null || targetUrl.isEmpty()) {
+            // Fallback lookup if environment key is omitted
+            configKey = "local." + appName + ".targetAppUrl";
+            targetUrl = ConfigReader.getProperty(configKey);
+        }
+
+        page.navigate(targetUrl);
         page.waitForLoadState(LoadState.NETWORKIDLE);
+    }
+
+    public String getActiveEnvironment() {
+        return activeEnvironment;
     }
 
     @AfterClass(alwaysRun = true)
