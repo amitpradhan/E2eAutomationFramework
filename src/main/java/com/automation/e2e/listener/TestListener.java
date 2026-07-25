@@ -1,9 +1,10 @@
-package com.automation.e2e.listener;
+package com.automation.e2e.listeners;
 
 import com.automation.e2e.base.Base;
 import com.automation.e2e.reports.ExtentReportManager;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
+import com.aventstack.extentreports.MediaEntityBuilder;
 import com.aventstack.extentreports.Status;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,11 +18,13 @@ public class TestListener implements ITestListener {
     private static final ExtentReports extent = ExtentReportManager.getInstance();
     private static final ThreadLocal<ExtentTest> testThread = new ThreadLocal<>();
 
+    public static ExtentTest getTest() {
+        return testThread.get();
+    }
+
     @Override
     public void onStart(ITestContext context) {
-        log.info("==========================================================================");
-        log.info("Starting Execution Suite: " + context.getName());
-        log.info("==========================================================================");
+        log.info("Starting Execution Context: {}", context.getName());
     }
 
     @Override
@@ -29,15 +32,12 @@ public class TestListener implements ITestListener {
         String methodName = result.getMethod().getMethodName();
         String className = result.getTestClass().getRealClass().getSimpleName();
 
-        // Extract Application Name from package structure (e.g., com.automation.e2e.tests.gk -> APP: GK)
         String packageName = result.getTestClass().getRealClass().getPackageName();
         String appName = packageName.contains(".")
                 ? packageName.substring(packageName.lastIndexOf('.') + 1).toUpperCase()
                 : "GENERAL";
 
         ExtentTest test = extent.createTest(className + " :: " + methodName, result.getMethod().getDescription());
-
-        // Tag reporting categories
         test.assignCategory("APP: " + appName);
 
         Object currentClass = result.getInstance();
@@ -45,8 +45,6 @@ public class TestListener implements ITestListener {
             String activeEnv = ((Base) currentClass).getActiveEnvironment().toUpperCase();
             test.assignCategory("ENV: " + activeEnv);
             log.info("[TEST START] [{}] [{}] {}.{}()", activeEnv, appName, className, methodName);
-        } else {
-            log.info("[TEST START] [{}] {}.{}()", appName, className, methodName);
         }
 
         testThread.set(test);
@@ -54,27 +52,48 @@ public class TestListener implements ITestListener {
 
     @Override
     public void onTestSuccess(ITestResult result) {
-        log.info("[TEST PASSED] " + result.getMethod().getMethodName());
+        log.info("[TEST PASSED] {}", result.getMethod().getMethodName());
+
+        // Optionally attach a success screenshot of the final page
+        attachScreenshotFromTestResult(result, "Final Page State");
+
         testThread.get().log(Status.PASS, "Test Executed Successfully.");
+        ExtentReportManager.flushReport();
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
-        log.error("[TEST FAILED] " + result.getMethod().getMethodName(), result.getThrowable());
+        log.error("[TEST FAILED] {}", result.getMethod().getMethodName(), result.getThrowable());
+
+        // Attach screenshot on failure
+        attachScreenshotFromTestResult(result, "Failure State Screenshot");
+
         testThread.get().log(Status.FAIL, result.getThrowable());
+        ExtentReportManager.flushReport();
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        log.warn("[TEST SKIPPED] " + result.getMethod().getMethodName());
+        log.warn("[TEST SKIPPED] {}", result.getMethod().getMethodName());
         testThread.get().log(Status.SKIP, "Test Execution Skipped: " + result.getThrowable());
+        ExtentReportManager.flushReport();
     }
 
     @Override
     public void onFinish(ITestContext context) {
-        log.info("==========================================================================");
-        log.info("Execution Suite Finished: " + context.getName());
-        log.info("==========================================================================");
-        extent.flush();
+        log.info("Finished Execution Context: {}", context.getName());
+        ExtentReportManager.flushReport();
+    }
+
+    private void attachScreenshotFromTestResult(ITestResult result, String title) {
+        Object currentClass = result.getInstance();
+        if (currentClass instanceof Base) {
+            Base baseTest = (Base) currentClass;
+            String base64Image = baseTest.captureScreenshotAsBase64();
+            if (!base64Image.isEmpty()) {
+                testThread.get().info(title,
+                        MediaEntityBuilder.createScreenCaptureFromBase64String(base64Image).build());
+            }
+        }
     }
 }

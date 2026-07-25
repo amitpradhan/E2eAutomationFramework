@@ -13,8 +13,15 @@ public class ExtentReportManager {
 
     public synchronized static ExtentReports getInstance() {
         if (extent == null) {
-            String reportDir = ConfigReader.getProperty("report.output.directory");
+            String reportDir = ConfigReader.getProperty("report.output.directory"); // e.g., "target/reports/"
             String reportName = ConfigReader.getProperty("report.file.name");
+
+            // 1. Ensure output directory exists before creating reporter
+            File directory = new File(reportDir);
+            if (!directory.exists()) {
+                directory.mkdirs(); // Creates target/reports/ directory tree dynamically
+            }
+
             String reportPath = reportDir + File.separator + reportName;
 
             ExtentSparkReporter sparkReporter = new ExtentSparkReporter(reportPath);
@@ -25,16 +32,26 @@ public class ExtentReportManager {
             extent = new ExtentReports();
             extent.attachReporter(sparkReporter);
 
-            // Dynamic Environment & System Details
+            // Dynamic System Metadata
             String activeEnv = System.getProperty("env", ConfigReader.getProperty("default.environment")).toUpperCase();
-            String browserChannel = ConfigReader.getProperty("browser.channel");
-
             extent.setSystemInfo("Target Environment", activeEnv);
-            extent.setSystemInfo("Browser Engine", browserChannel.toUpperCase());
+            extent.setSystemInfo("Browser Engine", ConfigReader.getProperty("browser.channel").toUpperCase());
             extent.setSystemInfo("Operating System", System.getProperty("os.name"));
             extent.setSystemInfo("Java Version", System.getProperty("java.version"));
-            extent.setSystemInfo("Executed By", System.getProperty("user.name"));
+
+            // 2. JVM Shutdown Hook guarantees disk-write on process exit
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (extent != null) {
+                    extent.flush();
+                }
+            }));
         }
         return extent;
+    }
+
+    public synchronized static void flushReport() {
+        if (extent != null) {
+            extent.flush();
+        }
     }
 }
