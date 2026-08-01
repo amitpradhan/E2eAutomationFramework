@@ -24,8 +24,8 @@ public class SaucedemoShopifyTest extends Base {
 
         homePage = new SaucedemoHomePage(page);
 
-        // 2. Select Product
-        productPage = homePage.selectFirstFeaturedProduct();
+        // 2. Select Product by element ID ("product-1" -> Grey Jacket)
+        productPage = homePage.selectProductById("product-1");
         String selectedTitle = productPage.getProductTitle();
         logStepScreenshot("2. Product Detail Page - " + selectedTitle);
 

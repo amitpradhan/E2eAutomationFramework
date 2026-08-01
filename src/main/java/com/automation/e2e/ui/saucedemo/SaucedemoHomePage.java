@@ -7,25 +7,26 @@ import com.microsoft.playwright.Page;
 public class SaucedemoHomePage {
 
     private final Page page;
-    private final Locator firstProductCard;
-    private final Locator searchInput;
 
     public SaucedemoHomePage(Page page) {
         this.page = page;
-        // Targets product links on sauce-demo.myshopify.com
-        // (UiActionsUtil handles calling .first() automatically)
-        this.firstProductCard = page.locator("a[href*='/products/']");
-        this.searchInput = page.locator("input[name='q']");
     }
 
-    public SaucedemoProductPage selectFirstFeaturedProduct() {
-        UiActionsUtil.click(firstProductCard);
+    /**
+     * Selects a specific product using its element ID (e.g., "product-1", "product-2")
+     */
+    public SaucedemoProductPage selectProductById(String productId) {
+        Locator productLocator = page.locator("#" + productId);
+        UiActionsUtil.click(productLocator);
         return new SaucedemoProductPage(page);
     }
 
-    public SaucedemoHomePage searchProduct(String query) {
-        UiActionsUtil.enterText(searchInput, query);
-        page.keyboard().press("Enter");
-        return this;
+    /**
+     * Fallback to select a product by its URL path string (e.g., "grey-jacket")
+     */
+    public SaucedemoProductPage selectProductBySlug(String productSlug) {
+        Locator productLocator = page.locator("a[href*='" + productSlug + "']");
+        UiActionsUtil.click(productLocator);
+        return new SaucedemoProductPage(page);
     }
 }
