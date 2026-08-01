@@ -2,10 +2,7 @@ package com.automation.e2e.base;
 
 import com.automation.e2e.listeners.TestListener;
 import com.automation.e2e.utils.ConfigReader;
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.LoadState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +10,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
 
+import java.util.Arrays;
 import java.util.Base64;
 
 @Listeners(TestListener.class)
@@ -22,6 +20,7 @@ public class Base {
 
     protected Playwright playwright;
     protected Browser browser;
+    protected BrowserContext context;
     protected Page page;
     protected String activeEnvironment;
 
@@ -34,24 +33,37 @@ public class Base {
 
         log.info("Initializing Test Infrastructure | Environment: [{}]", activeEnvironment.toUpperCase());
 
-        // CI/CD pipelines usually run headless
         boolean isHeadless = Boolean.parseBoolean(System.getProperty("headless", ConfigReader.getProperty("browser.headless")));
         String browserChannel = ConfigReader.getProperty("browser.channel");
         double pageLoadTimeout = Double.parseDouble(ConfigReader.getProperty("timeout.page.load"));
 
         playwright = Playwright.create();
+
         BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
                 .setHeadless(isHeadless)
                 .setChannel(browserChannel);
 
+        // Maximize browser window in headed mode
+        if (!isHeadless) {
+            launchOptions.setArgs(Arrays.asList("--start-maximized"));
+        }
+
         browser = playwright.chromium().launch(launchOptions);
-        page = browser.newPage();
+
+        Browser.NewContextOptions contextOptions = new Browser.NewContextOptions();
+
+        // Pass null viewport size when headed so browser uses full screen dimensions
+        if (!isHeadless) {
+            contextOptions.setViewportSize(null);
+        } else {
+            contextOptions.setViewportSize(1920, 1080);
+        }
+
+        context = browser.newContext(contextOptions);
+        page = context.newPage();
         page.setDefaultNavigationTimeout(pageLoadTimeout);
     }
 
-    /**
-     * Captures full page screenshot and returns it as a Base64 string for report embedding.
-     */
     public String captureScreenshotAsBase64() {
         try {
             if (page != null && !page.isClosed()) {
@@ -66,6 +78,10 @@ public class Base {
 
     public Page getPage() {
         return page;
+    }
+
+    public BrowserContext getContext() {
+        return context;
     }
 
     protected void navigateToApp(String appName) {
@@ -90,6 +106,7 @@ public class Base {
     public void teardownInfrastructure() {
         log.info("Tearing down browser context for environment: [{}]", activeEnvironment.toUpperCase());
         if (page != null) page.close();
+        if (context != null) context.close();
         if (browser != null) browser.close();
         if (playwright != null) playwright.close();
     }
