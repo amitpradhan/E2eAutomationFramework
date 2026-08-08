@@ -1,0 +1,8 @@
+{
+  "userId": "bill-5d977b9c",
+  "billerId": "biller-cb3a3c41",
+  "customerIdentifier": "cust_abc_xyz",
+  "amount": 150.50,
+  "dueDate": "2026-12-31",
+  "status": "pending"
+}

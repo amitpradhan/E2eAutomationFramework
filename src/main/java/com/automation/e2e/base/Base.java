@@ -110,4 +110,28 @@ public class Base {
         if (browser != null) browser.close();
         if (playwright != null) playwright.close();
     }
+
+
+    /**
+     * Fixture Getter for APIRequestContext.
+     * Tied to the current BrowserContext, meaning API calls automatically
+     * share cookies and authentication state with the UI Page.
+     */
+    public APIRequestContext getApiContext() {
+        return getContext().request();
+    }
+    /**
+     * Resolves the API Base URL from config.properties dynamically based on the active environment.
+     */
+    public String getBaseApiUrl(String appName) {
+        String configKey = activeEnvironment + "." + appName + ".targetApiUrl";
+        String targetUrl = ConfigReader.getProperty(configKey);
+
+        if (targetUrl == null || targetUrl.isEmpty()) {
+            configKey = "local." + appName + ".targetApiUrl";
+            targetUrl = ConfigReader.getProperty(configKey);
+        }
+        return targetUrl;
+    }
+
 }
