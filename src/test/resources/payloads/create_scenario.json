@@ -1,0 +1,7 @@
+{
+  "billerName": "Test Biller",
+  "billerId": "B12345",
+  "amount": 150.50,
+  "dueDate": "2026-12-31",
+  "status": "Pending"
+}
