@@ -2,8 +2,8 @@ package com.automation.e2e.tests;
 
 import com.automation.e2e.base.Base;
 import com.automation.e2e.listeners.TestListener;
-import com.automation.e2e.ui.gk.DashboardPage;
-import com.automation.e2e.ui.gk.ScenariosFormPage;
+import com.automation.e2e.ui.pages.gk.DashboardPage;
+import com.automation.e2e.ui.pages.gk.ScenariosFormPage;
 import com.aventstack.extentreports.MediaEntityBuilder;
 import com.aventstack.extentreports.Status;
 import org.testng.Assert;

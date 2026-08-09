@@ -1,8 +1,8 @@
 package com.automation.e2e.tests;
 
 import com.automation.e2e.base.Base;
-import com.automation.e2e.ui.gk.BusinessWorkflowPage;
-import com.automation.e2e.ui.gk.DashboardPage;
+import com.automation.e2e.ui.pages.gk.BusinessWorkflowPage;
+import com.automation.e2e.ui.pages.gk.DashboardPage;
 import com.automation.e2e.utils.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.testng.annotations.Test;

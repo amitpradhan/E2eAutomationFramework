@@ -1,4 +1,4 @@
-package com.automation.e2e.ui.gk;
+package com.automation.e2e.ui.pages.gk;
 
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.LoadState;

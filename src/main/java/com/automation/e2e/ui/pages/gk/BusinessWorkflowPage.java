@@ -1,4 +1,4 @@
-package com.automation.e2e.ui.gk;
+package com.automation.e2e.ui.pages.gk;
 
 import com.automation.e2e.utils.UiActionsUtil;
 import com.microsoft.playwright.Locator;
