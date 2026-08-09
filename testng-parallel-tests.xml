@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- Runs separate <test> blocks concurrently using 2 threads -->
+<suite name="Parallel Tests Suite" parallel="tests" thread-count="2" verbose="1">
+
+    <listeners>
+        <listener class-name="com.automation.e2e.listeners.TestListener"/>
+    </listeners>
+
+    <!-- Thread 1: Database Integration Module -->
+    <test name="Database Functional Component Tests">
+        <classes>
+            <class name="com.automation.e2e.tests.db.DatabaseIntegrationTest" />
+        </classes>
+    </test>
+
+    <!-- Thread 2: E2E Tri-Layer Module -->
+    <test name="Tri-Layer Workflow Tests">
+        <classes>
+            <class name="com.automation.e2e.tests.e2e.TriLayerE2eWorkflowTest" />
+        </classes>
+    </test>
+
+</suite>
