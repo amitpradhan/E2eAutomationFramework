@@ -1,82 +1,71 @@
 package com.automation.e2e.db;
 
+import com.automation.e2e.utils.ConfigReader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class DbUtil {
-    private static Connection connection;
+
+    private static final Logger log = LogManager.getLogger(DbUtil.class);
 
     /**
-     * Initializes the Master JDBC connection to the target environment database.
-     * Ensure your connection URL is properly authenticated.
+     * Establishes a database connection dynamically supporting MySQL, PostgreSQL, SQL Server, and Oracle.
      */
-    public static void initConnection(String url, String user, String password) throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(url, user, password);
+    public static Connection getConnection() throws SQLException {
+        String jdbcUrl = System.getProperty("db.url", ConfigReader.getProperty("db.url"));
+        String username = System.getProperty("db.user", ConfigReader.getProperty("db.user"));
+        String password = System.getProperty("db.password", ConfigReader.getProperty("db.password"));
+
+        if (jdbcUrl == null || jdbcUrl.isEmpty()) {
+            throw new RuntimeException("[DB ERROR] Database JDBC URL is not configured in config.properties or system properties!");
+        }
+
+        // Automatically load appropriate JDBC Driver based on URL pattern or config
+        registerDriver(jdbcUrl);
+
+        log.info("Establishing database connection to URL: {}", jdbcUrl);
+        return DriverManager.getConnection(jdbcUrl, username, password);
+    }
+
+    /**
+     * Auto-detects and registers the JDBC driver class based on the connection string prefix.
+     */
+    private static void registerDriver(String jdbcUrl) {
+        try {
+            if (jdbcUrl.contains("h2")) {
+                Class.forName("org.h2.Driver");
+            } else if (jdbcUrl.contains("mysql")) {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+            } else if (jdbcUrl.contains("postgresql")) {
+                Class.forName("org.postgresql.Driver");
+            } else if (jdbcUrl.contains("sqlserver")) {
+                Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            } else if (jdbcUrl.contains("oracle")) {
+                Class.forName("oracle.jdbc.OracleDriver");
+            }
+        } catch (ClassNotFoundException e) {
+            log.error("Failed to load JDBC driver class for URL pattern: {}", jdbcUrl, e);
+            throw new RuntimeException("Missing JDBC Driver dependency in pom.xml", e);
         }
     }
 
     /**
-     * Basic Validation Check: Fetches the total row count matching a condition.
-     * Essential for validating that data has successfully populated a target table.
+     * Executes a count query universally across any database vendor.
      */
-    public static int getRowCount(String tableName, String condition) throws SQLException {
-        String query = "SELECT COUNT(*) FROM " + tableName + (condition != null ? " WHERE " + condition : "");
-        try (Statement stmt = connection.createStatement();
+    public static int getRowCount(String tableName, String condition) {
+        String query = String.format("SELECT COUNT(*) FROM %s WHERE %s", tableName, condition);
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
+        } catch (SQLException e) {
+            log.error("Failed to fetch row count for table {}: {}", tableName, e.getMessage());
+            throw new RuntimeException(e);
         }
         return 0;
-    }
-
-    /**
-     * Dynamic Data Check: Executes a custom query and returns results as a List of Maps.
-     * Each row is mapped as column name (Key) to column cell value (Value).
-     */
-    public static List<Map<String, Object>> executeQuery(String query) throws SQLException {
-        List<Map<String, Object>> rows = new ArrayList<>();
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
-
-            while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    row.put(metaData.getColumnName(i), rs.getObject(i));
-                }
-                rows.add(row);
-            }
-        }
-        return rows;
-    }
-
-    /**
-     * Payload Blob Retrieval: Extracts a raw string block (JSON or XML structural block)
-     * out of a specified text data record column.
-     */
-    public static String fetchPayloadFromDb(String query, String columnName) throws SQLException {
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            if (rs.next()) {
-                return rs.getString(columnName);
-            }
-        }
-        throw new RuntimeException("No database record matched execution query: " + query);
-    }
-
-    /**
-     * Safely closes the active JDBC connection pipeline.
-     */
-    public static void closeConnection() throws SQLException {
-        if (connection != null && !connection.isClosed()) {
-            connection.close();
-        }
     }
 }

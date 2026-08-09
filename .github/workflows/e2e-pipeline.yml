@@ -1,0 +1,73 @@
+name: E2E Test Automation Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      db_vendor:
+        description: 'Database Vendor to run tests against'
+        required: true
+        default: 'h2'
+        type: choice
+        options:
+          - h2
+          - mysql
+          - postgres
+          - sqlserver
+
+jobs:
+  test:
+    name: Run E2E & DB Automation Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Java 21 JDK with Maven cache
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      # 3. Cache Playwright Browsers to speed up pipeline runs
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      # 4. Install Playwright Operating System Dependencies & Browsers
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      # 5. Execute TestNG Suite
+      # Runs H2 by default on push/PR, or selected db_vendor on manual trigger
+      - name: Execute Test Automation Suite
+        env:
+          TC_MYSQL_PASSWORD: ${{ secrets.TC_MYSQL_PASSWORD }}
+          TC_MSSQL_PASSWORD: ${{ secrets.TC_MSSQL_PASSWORD }}
+        run: |
+          DB_VENDOR="${{ github.event.inputs.db_vendor || 'h2' }}"
+          echo "Executing test suite with DB Vendor: $DB_VENDOR"
+          mvn clean test -DsuiteXmlFile=testng-db.xml -Ddb.vendor=$DB_VENDOR
+
+      # 6. Publish Extent Reports & Test Artifacts
+      - name: Upload Test Execution Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-execution-report
+          path: |
+            target/surefire-reports/
+            test-output/
+            reports/
+          retention-days: 14

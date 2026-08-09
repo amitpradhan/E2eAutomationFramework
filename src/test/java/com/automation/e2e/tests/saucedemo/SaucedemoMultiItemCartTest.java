@@ -2,9 +2,9 @@ package com.automation.e2e.tests.saucedemo;
 
 import com.automation.e2e.base.Base;
 import com.automation.e2e.listeners.TestListener;
-import com.automation.e2e.ui.saucedemo.SaucedemoCartPage;
-import com.automation.e2e.ui.saucedemo.SaucedemoHomePage;
-import com.automation.e2e.ui.saucedemo.SaucedemoProductPage;
+import com.automation.e2e.ui.pages.saucedemo.SaucedemoCartPage;
+import com.automation.e2e.ui.pages.saucedemo.SaucedemoHomePage;
+import com.automation.e2e.ui.pages.saucedemo.SaucedemoProductPage;
 import com.aventstack.extentreports.MediaEntityBuilder;
 import com.aventstack.extentreports.Status;
 import org.testng.Assert;

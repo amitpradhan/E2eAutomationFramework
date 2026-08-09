@@ -1,4 +1,4 @@
-package com.automation.e2e.ui.saucedemo;
+package com.automation.e2e.ui.pages.saucedemo;
 
 import com.automation.e2e.utils.UiActionsUtil;
 import com.microsoft.playwright.Locator;

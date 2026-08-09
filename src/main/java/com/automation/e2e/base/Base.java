@@ -1,14 +1,13 @@
 package com.automation.e2e.base;
 
+import com.automation.e2e.db.DbContainerFactory;
 import com.automation.e2e.listeners.TestListener;
 import com.automation.e2e.utils.ConfigReader;
 import com.microsoft.playwright.*;
 import com.microsoft.playwright.options.LoadState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Listeners;
+import org.testng.annotations.*;
 
 import java.util.Arrays;
 import java.util.Base64;
@@ -23,6 +22,60 @@ public class Base {
     protected BrowserContext context;
     protected Page page;
     protected String activeEnvironment;
+
+    @BeforeSuite
+    public void globalSetupHook() {
+        // 1. Resolve target DB vendor from system properties or config.properties (defaults to mysql)
+        String targetDbVendor = System.getProperty("db.vendor", ConfigReader.getProperty("db.vendor"));
+        if (targetDbVendor == null || targetDbVendor.trim().isEmpty()) {
+            targetDbVendor = "mysql";
+        }
+
+        log.info("--- [GLOBAL HOOK] Initializing Testcontainers for Database Vendor: [{}] ---", targetDbVendor.toUpperCase());
+        try {
+            // Spins up the dynamic container and populates system properties: db.url, db.user, db.password
+            DbContainerFactory.startContainer(targetDbVendor);
+        } catch (Exception e) {
+            log.error("Failed to start database container for vendor [{}]. Ensure Docker Desktop is running! Error: {}", targetDbVendor, e.getMessage());
+            throw new RuntimeException("Database Container initialization failed", e);
+        }
+
+        // 2. Playwright Initialization
+        // ... (existing Playwright code)
+    }
+
+    @AfterSuite(alwaysRun = true)
+    public void globalTeardownHook() {
+        log.info("--- [GLOBAL HOOK] Shutting down Browser, Playwright, and Database Containers ---");
+
+        // 1. Safely close Playwright browser if connected
+        try {
+            if (browser != null && browser.isConnected()) {
+                browser.close();
+                log.info("Playwright browser closed successfully.");
+            }
+        } catch (Exception e) {
+            log.warn("Issue closing browser during teardown: {}", e.getMessage());
+        }
+
+        // 2. Safely close Playwright engine instance
+        try {
+            if (playwright != null) {
+                playwright.close();
+                log.info("Playwright engine closed successfully.");
+            }
+        } catch (Exception e) {
+            log.warn("Issue closing Playwright engine during teardown: {}", e.getMessage());
+        }
+
+        // 3. Stop database containers
+        try {
+            DbContainerFactory.stopContainer();
+        } catch (Exception e) {
+            log.warn("Issue stopping database container during teardown: {}", e.getMessage());
+        }
+    }
+
 
     @BeforeClass
     public void setupInfrastructure() {
