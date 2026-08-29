@@ -58,8 +58,7 @@ jobs:
         run: |
           DB_VENDOR="${{ github.event.inputs.db_vendor || 'h2' }}"
           echo "Executing master testng.xml suite with DB Vendor: $DB_VENDOR"
-          mvn clean test "-DsuiteXmlFile=testng.xml" "-Ddb.vendor=$DB_VENDOR"
-
+          mvn clean test "-DsuiteXmlFile=testng.xml" "-Ddb.vendor=$DB_VENDOR" "-Dheadless=true"
       # 6. Publish Extent Reports & Test Artifacts
       - name: Upload Test Execution Reports
         if: always()
